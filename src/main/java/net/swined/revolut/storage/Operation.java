@@ -1,7 +1,9 @@
 package net.swined.revolut.storage;
 
+import net.swined.revolut.ClientError;
 import org.joda.money.Money;
 
+import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,12 +27,20 @@ public class Operation {
                 dst.entrySet().stream().allMatch(e -> e.getValue().equals(src.get(e.getKey())));
     }
 
+    private Money parseMoney(String value) {
+        try {
+            return Money.parse(value);
+        } catch (Exception e) {
+            throw new ClientError(HttpURLConnection.HTTP_BAD_REQUEST, e);
+        }
+    }
+
     public synchronized void apply(Function<String, Account> accountMapper) {
         if (!done) {
             try {
                 Account.update(diff.entrySet().stream().collect(Collectors.toMap(
                         e -> accountMapper.apply(e.getKey()),
-                        e -> Money.parse(e.getValue())
+                        e -> parseMoney(e.getValue())
                 )));
             } catch (RuntimeException e) {
                 error = e;

@@ -90,6 +90,17 @@ class ServerTest {
     }
 
     @Test
+    public void badMoney() {
+        assertPut("/account/y", Map.of("currency", "USD"), 200, "{}");
+        assertPut("/operation/" + UUID.randomUUID().toString(), Map.of("y", "30 USD"), 400, "{\"error\":\"Money amount '30 USD' cannot be parsed\"}");
+        assertPut("/operation/" + UUID.randomUUID().toString(), Map.of("y", "30 usd"), 400, "{\"error\":\"Money amount '30 usd' cannot be parsed\"}");
+        assertPut("/operation/" + UUID.randomUUID().toString(), Map.of("y", "usd 30"), 400, "{\"error\":\"Unknown currency 'usd'\"}");
+        assertPut("/operation/" + UUID.randomUUID().toString(), Map.of("y", "USD"), 400, "{\"error\":\"Money 'USD' cannot be parsed\"}");
+        assertPut("/operation/" + UUID.randomUUID().toString(), Map.of("y", "USD 1.001"), 400, "{\"error\":\"Rounding necessary\"}");
+        assertPut("/operation/" + UUID.randomUUID().toString(), Map.of("y", "USD zero"), 400, "{\"error\":\"Money amount 'USD zero' cannot be parsed\"}");
+    }
+
+    @Test
     public void putUnknownPath() {
         assertPut("/", Map.of(), 404, "<h1>404 Not Found</h1>No context found for request");
     }
